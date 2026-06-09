@@ -1,0 +1,95 @@
+[gd_scene format=3 uid="uid://b1a8hj3lx3kf3"]
+
+[ext_resource type="Script" uid="uid://cxe1ox23g78ij" path="res://examples/score_sender.gd" id="1_6vbly"]
+[ext_resource type="Resource" uid="uid://bam5gg3fe1ps4" path="res://examples/config.tres" id="2_aqi44"]
+
+[node name="ScoreSender" type="Control" unique_id=224920349]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_6vbly")
+config = ExtResource("2_aqi44")
+
+[node name="Margin" type="MarginContainer" parent="." unique_id=1341501308]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="Margin" unique_id=559036506]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Title" type="Label" parent="Margin/VBox" unique_id=1049402212]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.262745, 0.709804, 0.921569, 1)
+theme_override_font_sizes/font_size = 20
+text = "unityroom SDK Example"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Margin/VBox" unique_id=1115390494]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="ScoreboardIdRow" type="HBoxContainer" parent="Margin/VBox" unique_id=1329118224]
+layout_mode = 2
+
+[node name="ScoreboardIdLabel" type="Label" parent="Margin/VBox/ScoreboardIdRow" unique_id=1577047928]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "Scoreboard ID"
+
+[node name="ScoreboardIdInput" type="SpinBox" parent="Margin/VBox/ScoreboardIdRow" unique_id=72396685]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 999999.0
+value = 1.0
+
+[node name="ScoreRow" type="HBoxContainer" parent="Margin/VBox" unique_id=1226082878]
+layout_mode = 2
+
+[node name="ScoreLabel" type="Label" parent="Margin/VBox/ScoreRow" unique_id=463597198]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "Score"
+
+[node name="ScoreInput" type="SpinBox" parent="Margin/VBox/ScoreRow" unique_id=1942226790]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = -999999.0
+max_value = 999999.0
+value = 100.0
+
+[node name="Spacer2" type="Control" parent="Margin/VBox" unique_id=1773892792]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="SendButton" type="Button" parent="Margin/VBox" unique_id=1616675135]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "送信"
+
+[node name="Spacer3" type="Control" parent="Margin/VBox" unique_id=189748942]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="ResultLabel" type="RichTextLabel" parent="Margin/VBox" unique_id=280455656]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
