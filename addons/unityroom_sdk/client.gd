@@ -51,12 +51,12 @@ static var _crypto := Crypto.new()
 
 func send_score(scoreboard_id: int, score: float) -> void:
 	if _hmac_key_bytes.is_empty():
-		push_error("UnityroomClient: HMAC key not initialized. send_score aborted.")
+		push_error("[unityroom] HMAC key not initialized. send_score aborted.")
 		score_uploaded.emit(false, ErrorResponse.new(0, "not_initialized", "Client not initialized with a valid HMAC key."))
 		return
 
 	if _is_busy:
-		push_error("UnityroomClient: A request is already in progress.")
+		push_error("[unityroom] A request is already in progress.")
 		score_uploaded.emit(false, ErrorResponse.new(0, "busy", "A request is already in progress. Wait for the previous request to complete."))
 		return
 	var path := "/gameplay_api/v1/scoreboards/%d/scores" % scoreboard_id
