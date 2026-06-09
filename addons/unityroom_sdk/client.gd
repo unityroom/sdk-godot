@@ -77,20 +77,19 @@ func send_score(scoreboard_id: int, score: float) -> void:
 	while true:
 		var result := await _post(path, headers, body)
 
-		if result.has("error"):
-			var err_type = result.get("error_type", "")
-			if err_type == "rate_limit_exceeded" and retry > 0:
+		if result is ErrorResponse:
+			if result.type == "rate_limit_exceeded" and retry > 0:
 				retry -= 1
 				await get_tree().create_timer(5.0).timeout
 				continue
 
-			score_uploaded.emit(false, ErrorResponse.new(result.error_code, result.error_type, result.error_message))
+			score_uploaded.emit(false, result)
 			return
 
-		score_uploaded.emit(true, ScoreUploadResponse.new(result.score_updated))
+		score_uploaded.emit(true, result as ScoreUploadResponse)
 		return
 
-func _post(path: String, headers: PackedStringArray, body: String) -> Dictionary:
+func _post(path: String, headers: PackedStringArray, body: String) -> Response:
 	_is_busy = true
 
 	var timed_out := false
@@ -108,7 +107,7 @@ func _post(path: String, headers: PackedStringArray, body: String) -> Dictionary
 		_is_busy = false
 		if timer != null and timer.timeout.is_connected(on_timeout):
 			timer.timeout.disconnect(on_timeout)
-		return _err(0, "request_failed", "Failed to start request, error code: %d" % err)
+		return ErrorResponse.new(0, "request_failed", "Failed to start request, error code: %d" % err)
 
 	var response: Array = await _http.request_completed
 	_is_busy = false
@@ -117,39 +116,36 @@ func _post(path: String, headers: PackedStringArray, body: String) -> Dictionary
 		timer.timeout.disconnect(on_timeout)
 
 	if timed_out:
-		return _err(0, "timeout", "Request timed out after %.1f seconds." % _timeout)
+		return ErrorResponse.new(0, "timeout", "Request timed out after %.1f seconds." % _timeout)
 
 	var result: int = response[0]
 	var status_code: int = response[1]
 	var body_raw: PackedByteArray = response[3]
 
 	if result != HTTPRequest.RESULT_SUCCESS:
-		return _err(0, "request_failed", "HTTP request failed, result code: %d" % result)
+		return ErrorResponse.new(0, "request_failed", "HTTP request failed, result code: %d" % result)
 
 	var body_text := body_raw.get_string_from_utf8()
 	if body_text.is_empty():
-		return _err(0, "empty_response", "Empty response from server.")
+		return ErrorResponse.new(0, "empty_response", "Empty response from server.")
 
 	var json := JSON.new()
 	var parse_err := json.parse(body_text)
 	if parse_err != OK:
-		return _err(0, "parse_error", "Failed to parse response JSON: %s" % json.get_error_message())
+		return ErrorResponse.new(0, "parse_error", "Failed to parse response JSON: %s" % json.get_error_message())
 
 	var data: Dictionary = json.data
 	if data.is_empty():
-		return _err(0, "empty_response", "Empty JSON data in response.")
+		return ErrorResponse.new(0, "empty_response", "Empty JSON data in response.")
 
 	if status_code >= 400:
-		return _err(
+		return ErrorResponse.new(
 			int(data.get("code", 0)),
 			str(data.get("type", "")),
 			str(data.get("message", "")),
 		)
 
-	return {
-		status = data.get("status", ""),
-		score_updated = data.get("saved", false),
-	}
+	return ScoreUploadResponse.new(data.get("saved", false))
 
 static func _base_url() -> String:
 	if OS.get_name() == "Web":
@@ -161,6 +157,3 @@ static func _hmac(data: String, key: PackedByteArray) -> String:
 	var data_bytes := data.to_utf8_buffer()
 	var hash := _crypto.hmac_digest(HashingContext.HASH_SHA256, key, data_bytes)
 	return hash.hex_encode()
-
-static func _err(code: int, type: String, message: String) -> Dictionary:
-	return {error = true, error_code = code, error_type = type, error_message = message}
