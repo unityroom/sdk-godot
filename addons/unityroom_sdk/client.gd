@@ -22,6 +22,8 @@ signal score_uploaded(success: bool, response: Response)
 var _timeout: float = 600.0
 var _max_retries: int = 2
 var _hmac_key_bytes: PackedByteArray
+var _http: HTTPRequest
+var _is_busy := false
 
 var timeout: float:
 	get:
@@ -38,6 +40,12 @@ func _init(hmac_key: String, options: Dictionary = {}) -> void:
 	_hmac_key_bytes = Marshalls.base64_to_raw(hmac_key)
 	_timeout = options.get("timeout", 600.0)
 	_max_retries = options.get("max_retries", 2)
+	_http = HTTPRequest.new()
+	add_child(_http)
+
+func _exit_tree() -> void:
+	if _http != null:
+		_http.cancel_request()
 
 static var _crypto := Crypto.new()
 
@@ -45,6 +53,11 @@ func send_score(scoreboard_id: int, score: float) -> void:
 	if _hmac_key_bytes.is_empty():
 		push_error("UnityroomClient: HMAC key not initialized. send_score aborted.")
 		score_uploaded.emit(false, ErrorResponse.new(0, "not_initialized", "Client not initialized with a valid HMAC key."))
+		return
+
+	if _is_busy:
+		push_error("UnityroomClient: A request is already in progress.")
+		score_uploaded.emit(false, ErrorResponse.new(0, "busy", "A request is already in progress. Wait for the previous request to complete."))
 		return
 	var path := "/gameplay_api/v1/scoreboards/%d/scores" % scoreboard_id
 	var unix_time := str(int(Time.get_unix_time_from_system()))
@@ -78,29 +91,30 @@ func send_score(scoreboard_id: int, score: float) -> void:
 		return
 
 func _post(path: String, headers: PackedStringArray, body: String) -> Dictionary:
-	var http := HTTPRequest.new()
-	add_child(http)
+	_is_busy = true
 
 	var timed_out := false
 	var on_timeout := func():
 		timed_out = true
-		http.cancel_request()
+		_http.cancel_request()
 
 	var timer: SceneTreeTimer = null
 	if not Engine.is_editor_hint():
 		timer = get_tree().create_timer(_timeout)
 		timer.timeout.connect(on_timeout)
 
-	var err := http.request(_base_url() + path, headers, HTTPClient.METHOD_POST, body)
+	var err := _http.request(_base_url() + path, headers, HTTPClient.METHOD_POST, body)
 	if err != OK:
-		http.queue_free()
+		_is_busy = false
+		if timer != null and timer.timeout.is_connected(on_timeout):
+			timer.timeout.disconnect(on_timeout)
 		return _err(0, "request_failed", "Failed to start request, error code: %d" % err)
 
-	var response: Array = await http.request_completed
+	var response: Array = await _http.request_completed
+	_is_busy = false
+
 	if timer != null and timer.timeout.is_connected(on_timeout):
 		timer.timeout.disconnect(on_timeout)
-
-	http.queue_free()
 
 	if timed_out:
 		return _err(0, "timeout", "Request timed out after %.1f seconds." % _timeout)
