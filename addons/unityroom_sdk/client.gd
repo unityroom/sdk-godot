@@ -35,9 +35,12 @@ var max_retries: int:
 
 func _init(hmac_key: String, options: Dictionary = {}) -> void:
 	if typeof(hmac_key) != TYPE_STRING or hmac_key.is_empty():
-		push_error("HMAC key is not set.")
+		push_error("[unityroom] HMAC key is not set.")
 		return
 	_hmac_key_bytes = Marshalls.base64_to_raw(hmac_key)
+	if _hmac_key_bytes.is_empty():
+		push_error("[unityroom] HMAC key is not valid base64.")
+		return
 	_timeout = options.get("timeout", 600.0)
 	_max_retries = options.get("max_retries", 2)
 	_http = HTTPRequest.new()
