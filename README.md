@@ -52,15 +52,29 @@ optionsキー:
 | ------------- | ------- | ---------- | ---------------------------------- |
 | `timeout`     | `float` | `600.0`    | HTTPリクエストのタイムアウト（秒） |
 | `max_retries` | `int`   | `2`        | レート制限時の最大再試行回数       |
+| `request_interval` | `float` | `5.0` | スコア送信間の最小間隔（秒）。`0.0`で無効 |
 
 #### `send_score(scoreboard_id: int, score: float) -> void`
 
 スコアをunityroomのスコアボードに非同期で送信します。完了時に `score_uploaded` シグナルを発行します。
 
+初回送信時にスコアボード情報を取得してキャッシュします。
+送信中にさらにスコアが送られた場合はスコアボードの並び順に応じた良いスコアを残します。
+破棄されたスコアは `throttled` エラーとして通知されます。
+
 | 引数            | 型      | 説明                      |
 | --------------- | ------- | ------------------------- |
 | `scoreboard_id` | `int`   | unityroomのスコアボードID |
 | `score`         | `float` | 送信するスコア値          |
+
+#### `get_scoreboard(board_no: int) -> void`
+
+スコアボードのメタ情報を非同期で取得します。完了時に `scoreboard_received` シグナルを発行します。
+取得した情報はクライアント内にキャッシュされ、同じスコアボードへの2回目以降の呼び出しでは通信せずに返されます。
+
+| 引数       | 型    | 説明                      |
+| ---------- | ----- | ------------------------- |
+| `board_no` | `int` | unityroomのスコアボード番号 |
 
 #### シグナル
 
@@ -71,6 +85,13 @@ optionsキー:
 | `success`  | `bool`     | 成功時は `true`、失敗時は `false`            |
 | `response` | `Response` | `ScoreUploadResponse` または `ErrorResponse` |
 
+**`scoreboard_received(success: bool, response: Response)`**
+
+| 引数       | 型         | 説明                                             |
+| ---------- | ---------- | ------------------------------------------------ |
+| `success`  | `bool`     | 成功時は `true`、失敗時は `false`                |
+| `response` | `Response` | `ScoreboardResponse` または `ErrorResponse`      |
+
 ### レスポンス型
 
 #### `UnityroomClient.ScoreUploadResponse`
@@ -78,6 +99,17 @@ optionsキー:
 | プロパティ      | 型     | 説明                            |
 | --------------- | ------ | ------------------------------- |
 | `score_updated` | `bool` | スコアが更新された場合は `true` |
+
+#### `UnityroomClient.ScoreboardResponse`
+
+| プロパティ    | 型       | 説明                         |
+| ------------- | -------- | ---------------------------- |
+| `board_no`    | `int`    | スコアボード番号             |
+| `title`       | `String` | タイトル                     |
+| `unit`        | `String` | スコアの単位                 |
+| `order`       | `String` | 並び順                       |
+| `update_rule` | `String` | スコア更新ルール             |
+| `format`      | `String` | スコアの表示形式             |
 
 #### `UnityroomClient.ErrorResponse`
 
