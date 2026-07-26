@@ -147,7 +147,6 @@ func _process_score_queue(current: Dictionary) -> void:
 			_scoreboard_cache[scoreboard_id] = scoreboard_result
 			_collapse_pending_scores(scoreboard_id)
 
-		await _wait_for_score_slot()
 		var result := await _post_score(scoreboard_id, float(current.score))
 		if result is ErrorResponse:
 			score_uploaded.emit(false, result)
@@ -165,22 +164,22 @@ func _take_pending_score() -> Dictionary:
 
 func _post_score(scoreboard_id: int, score: float) -> Response:
 	var path := "/gameplay_api/v1/scoreboards/%d/scores" % scoreboard_id
-	var unix_time := str(int(Time.get_unix_time_from_system()))
 	var score_text := str(score)
-	var hmac_input := "POST\n%s\n%s\n%s" % [path, unix_time, score_text]
-	var signature := _hmac(hmac_input, _hmac_key_bytes)
-	var headers := PackedStringArray([
-		"X-Unityroom-Signature: %s" % signature,
-		"X-Unityroom-Timestamp: %s" % unix_time,
-	])
 	var retry := _max_retries
 
 	while true:
+		await _wait_for_score_slot()
+		var unix_time := str(int(Time.get_unix_time_from_system()))
+		var hmac_input := "POST\n%s\n%s\n%s" % [path, unix_time, score_text]
+		var signature := _hmac(hmac_input, _hmac_key_bytes)
+		var headers := PackedStringArray([
+			"X-Unityroom-Signature: %s" % signature,
+			"X-Unityroom-Timestamp: %s" % unix_time,
+		])
 		_last_score_request_at_msec = Time.get_ticks_msec()
 		var result := await _request(path, headers, HTTPClient.METHOD_POST, "score=%s" % score_text)
 		if result is ErrorResponse and result.type == "rate_limit_exceeded" and retry > 0:
 			retry -= 1
-			await get_tree().create_timer(5.0).timeout
 			continue
 		return result
 	return ErrorResponse.new(0, "request_failed", "Score request ended unexpectedly.")
