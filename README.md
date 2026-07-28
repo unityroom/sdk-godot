@@ -32,7 +32,8 @@ your-project/
 
 1. [こちら](https://unityroom-help.notion.site/4fae458305a948818b90e50dcad6a3f3?pvs=4)の手順に従い、unityroom側でのセットアップを行う
 2. APIキー画面からHMAC認証用キーを取得
-    * ![img3](docs/img3.png)
+  *  <img width="907" alt="スクリーンショット 2023-05-16 1 52 19" src="https://github.com/naichilab/unityroom-client-library/assets/7110482/8be131d7-d34f-4f07-bd6e-c74a7795e7c2">
+
 
 ## クイックスタート
 
