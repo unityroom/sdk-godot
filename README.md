@@ -8,7 +8,31 @@
 
 ### Asset Library
 
-TODO:
+Godot Asset Libraryへ登録していますが、現在審査中です。
+公開後はエディタの「AssetLib」から `unityroom SDK` を検索してインストールできます。
+
+### Releasesからダウンロード
+
+GitHubのReleasesからアドオンを直接ダウンロードできます。
+
+1. [Releases](https://github.com/unityroom/sdk-godot/releases)から最新のリリースを選択し、`unityroom_sdk.zip`をダウンロードします。
+2. 展開したフォルダを導入先のGodotプロジェクトの`addons/`以下にコピーします。
+3. エディタでプロジェクトを開きます。すでに開いている場合は、プロジェクトを再読み込みします。
+
+```text
+your-project/
+└── addons/
+    └── unityroom_sdk/
+        ├── client.gd
+        ├── plugin.cfg
+        └── unityroom_sdk.gd
+```
+
+### セットアップ
+
+1. [こちら](https://unityroom-help.notion.site/4fae458305a948818b90e50dcad6a3f3?pvs=4)の手順に従い、unityroom側でのセットアップを行う
+2. APIキー画面からHMAC認証用キーを取得
+    * ![img3](docs/img3.png)
 
 ## クイックスタート
 
